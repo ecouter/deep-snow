@@ -170,8 +170,15 @@ def download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_
     snowon_s1_ds = snowon_s1_ds.where(snowon_s1_ds.time.dt.hour > 11, drop=True)
     # compute median
     snowon_s1_ds = snowon_s1_ds.median(dim='time').squeeze().compute()
+    # debug: print variables in dataset
+    print("Variables in snowon_s1_ds:", list(snowon_s1_ds.data_vars))
     # rename variables
-    snowon_s1_ds = snowon_s1_ds.rename({'vv': 'snowon_vv', 'vh': 'snowon_vh'})
+    if 'vv' in snowon_s1_ds.data_vars and 'vh' in snowon_s1_ds.data_vars:
+        snowon_s1_ds = snowon_s1_ds.rename({'vv': 'snowon_vv', 'vh': 'snowon_vh'})
+    elif 'hh' in snowon_s1_ds.data_vars and 'hv' in snowon_s1_ds.data_vars:
+        snowon_s1_ds = snowon_s1_ds.rename({'hh': 'snowon_vv', 'hv': 'snowon_vh'})
+    else:
+        raise ValueError("Unsupported Sentinel-1 polarizations")
 
     # Search for snow-off Sentinel-1 data
     print('searching for Sentinel-1 snow-off data')
@@ -199,7 +206,12 @@ def download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_
     snowoff_s1_ds = snowoff_s1_ds.where(snowoff_s1_ds.time.dt.hour > 11, drop=True)
     # compute median
     snowoff_s1_ds = snowoff_s1_ds.median(dim='time').squeeze().compute()
-    snowoff_s1_ds = snowoff_s1_ds.rename({'vv': 'snowoff_vv', 'vh': 'snowoff_vh'})
+    if 'vv' in snowoff_s1_ds.data_vars and 'vh' in snowoff_s1_ds.data_vars:
+        snowoff_s1_ds = snowoff_s1_ds.rename({'vv': 'snowoff_vv', 'vh': 'snowoff_vh'})
+    elif 'hh' in snowoff_s1_ds.data_vars and 'hv' in snowoff_s1_ds.data_vars:
+        snowoff_s1_ds = snowoff_s1_ds.rename({'hh': 'snowoff_vv', 'hv': 'snowoff_vh'})
+    else:
+        raise ValueError("Unsupported Sentinel-1 polarizations")
 
     # search for Sentinel-2 data
     print('searching for Sentinel-2 snow-on data')
@@ -363,7 +375,7 @@ def download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_
 
     return crs
 
-def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=True):
+def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False):
     data_fn = f'{out_dir}/model_inputs.nc'
     print('reading input data')
     ds = xr.open_dataset(data_fn)
@@ -420,9 +432,7 @@ def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, ou
                   'northness',
                   'slope',
                   'curvature',
-                  'dowy',
-                  'delta_cr',
-                  'fcf'
+                  'dowy'
                  ]
 
     #load previous model
@@ -512,7 +522,7 @@ def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, ou
     
     return ds
 
-def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=True):
+def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False):
     data_fn = f'{out_dir}/model_inputs.nc'
     print('reading input data')
     ds = xr.open_dataset(data_fn)
@@ -569,9 +579,7 @@ def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, de
                   'northness',
                   'slope',
                   'curvature',
-                  'dowy',
-                  'delta_cr',
-                  'fcf'
+                  'dowy'
                  ]
 
     #load previous model
@@ -740,7 +748,8 @@ def calculate_uncertainty(ds, model_path):
 
 def predict_sd(aoi, target_date, snowoff_date, model_path, out_dir, out_crs='utm', out_name='deep-snow_sd.tif', write_tif=True, delete_inputs=False, cloud_cover=25):
     # download data
-    crs = download_data(aoi, target_date, snowoff_date, out_dir, cloud_cover)
+    buffer_period = 100
+    crs = download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_cover)
     # apply model
     ds = apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, out_crs='utm')
 
@@ -787,18 +796,4 @@ def main():
 
 if __name__ == "__main__":
    main()
-    
-    
-    
-    
-
-    
-    
-    
-    
-        
-        
-        
-
-
 
