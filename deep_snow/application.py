@@ -434,7 +434,9 @@ def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, ou
                   'northness',
                   'slope',
                   'curvature',
-                  'dowy'
+                  'dowy',
+                  'delta_cr',
+                  'fcf'
                  ]
 
     #load previous model
@@ -581,7 +583,9 @@ def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, de
                   'northness',
                   'slope',
                   'curvature',
-                  'dowy'
+                  'dowy',
+                  'delta_cr',
+                  'fcf'
                  ]
 
     #load previous model
