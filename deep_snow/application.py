@@ -115,6 +115,8 @@ def download_fcf(out_fp):
     url_download(fcf_url, out_fp)
 
 def download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_cover):
+    # Create output directory if it doesn't exist
+    os.makedirs(out_dir, exist_ok=True)
 
     aoi = {
     "type": "Polygon",
