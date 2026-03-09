@@ -1,4 +1,4 @@
-from deep_snow.application import download_data, apply_model_ensemble
+from deep_snow.application import download_data, apply_model_ensemble, apply_model
 from datetime import datetime, timedelta
 import time
 
@@ -48,10 +48,18 @@ for target_date in date_list:
     out_dir = f'run/{target_date}/'
     print(f"Predicting snow depth for {target_date} (snowoff: {snowoff_date})...")
     
-    buffer_period = 6
+    buffer_period = 50
     for attempt in range(max_retries):
         try:
             crs = download_data(aoi=aoi, target_date=target_date, buffer_period=buffer_period, snowoff_date=snowoff_date, out_dir=out_dir, cloud_cover=cloud_cover)
+            
+            # Run Quinn's ResDepth v11 with specific input channels
+            quinn_model_path = 'weights/quinn_ResDepth_v11_254epochs'
+            if __name__ == "__main__" and __file__:
+                quinn_input_channels = ['snowon_vv','delta_cr','green','swir2','ndsi','ndwi','snodas_sd','elevation','latitude','longitude']
+                quinn_ds = apply_model(out_dir=out_dir, out_name=f'{target_date}_quinn', crs=crs, write_tif=True, model_path=quinn_model_path, delete_inputs=False, out_crs='utm', gpu=False, input_channels=quinn_input_channels)
+            
+            # Run ensemble model
             ds = apply_model_ensemble(out_dir=out_dir, out_name=f'{target_date}_deep-snow', crs=crs, write_tif=True, model_paths_list=model_paths_list, delete_inputs=False, out_crs='utm', gpu=False)
             print(f"Prediction completed for {target_date}")
             break  # Exit the loop if successful

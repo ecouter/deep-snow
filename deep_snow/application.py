@@ -377,7 +377,7 @@ def download_data(aoi, target_date, snowoff_date, buffer_period, out_dir, cloud_
 
     return crs
 
-def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False):
+def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False, input_channels=None):
     data_fn = f'{out_dir}/model_inputs.nc'
     print('reading input data')
     ds = xr.open_dataset(data_fn)
@@ -425,19 +425,20 @@ def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, ou
     # clamp values, add dimensions
     data_dict = {key: torch.clamp(data_dict[key], 0, 1)[None, None, :, :] for key in data_dict.keys()}
 
-    # define input channels for model
-    input_channels = ['snodas_sd',
-                  'blue',
-                  'swir1',
-                  'ndsi',
-                  'elevation',
-                  'northness',
-                  'slope',
-                  'curvature',
-                  'dowy',
-                  'delta_cr',
-                  'fcf'
-                 ]
+    # define input channels for model (use default if none provided)
+    if input_channels is None:
+        input_channels = ['snodas_sd',
+                      'blue',
+                      'swir1',
+                      'ndsi',
+                      'elevation',
+                      'northness',
+                      'slope',
+                      'curvature',
+                      'dowy',
+                      'delta_cr',
+                      'fcf'
+                     ]
 
     #load previous model
     print('loading model')
@@ -526,7 +527,7 @@ def apply_model(crs, model_path, out_dir, out_name, write_tif, delete_inputs, ou
     
     return ds
 
-def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False):
+def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, delete_inputs, out_crs, gpu=False, input_channels=None):
     data_fn = f'{out_dir}/model_inputs.nc'
     print('reading input data')
     ds = xr.open_dataset(data_fn)
@@ -574,19 +575,20 @@ def apply_model_ensemble(crs, model_paths_list, out_dir, out_name, write_tif, de
     # clamp values, add dimensions
     data_dict = {key: torch.clamp(data_dict[key], 0, 1)[None, None, :, :] for key in data_dict.keys()}
 
-    # define input channels for model
-    input_channels = ['snodas_sd',
-                  'blue',
-                  'swir1',
-                  'ndsi',
-                  'elevation',
-                  'northness',
-                  'slope',
-                  'curvature',
-                  'dowy',
-                  'delta_cr',
-                  'fcf'
-                 ]
+    # define input channels for model (use default if none provided)
+    if input_channels is None:
+        input_channels = ['snodas_sd',
+                      'blue',
+                      'swir1',
+                      'ndsi',
+                      'elevation',
+                      'northness',
+                      'slope',
+                      'curvature',
+                      'dowy',
+                      'delta_cr',
+                      'fcf'
+                     ]
 
     #load previous model
     print('loading models')
